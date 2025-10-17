@@ -105,9 +105,19 @@ class InvoiceController extends Controller
 	// 	// dd($logo);
 	// 	return view('invoice.list', compact('invoice', 'updatekey', 'logo', 'branchDatas'));
 	// }
-    public function showall(Request $request) {
+	public function showall(Request $request) {
 		if ($request->ajax()) {
 			$query = Invoice::with('branch')->leftJoin('users as customer', 'tbl_invoices.customer_id', '=', 'customer.id')
+				->leftJoin('tbl_services', function($join) {
+					$join->on('tbl_invoices.sales_service_id', '=', 'tbl_services.id')
+						 ->where('tbl_invoices.type', '=', 0);
+				})
+				->leftJoin('tbl_sales', function($join) {
+					$join->on('tbl_invoices.sales_service_id', '=', 'tbl_sales.id')
+						 ->where('tbl_invoices.type', '=', 1);
+				})
+				->leftJoin('tbl_vehicles as service_vehicle', 'tbl_services.vehicle_id', '=', 'service_vehicle.id')
+				->leftJoin('tbl_vehicles as sale_vehicle', 'tbl_sales.vehicle_id', '=', 'sale_vehicle.id')
 				->select(
 					'tbl_invoices.id',
 					'tbl_invoices.invoice_number',
@@ -121,11 +131,10 @@ class InvoiceController extends Controller
 					'tbl_invoices.payment_status',
 					'tbl_invoices.date',
 					'customer.name as customer_name',
+					DB::raw('COALESCE(service_vehicle.number_plate, sale_vehicle.number_plate, "") as number_plate')
 				)
 				->where('tbl_invoices.soft_delete', '=', 0)
-				->where('tbl_invoices.type', '!=', 2)->orderBy('id', 'DESC');
-	    
-			 // Apply filters based on user role
+				->where('tbl_invoices.type', '!=', 2)->orderBy('tbl_invoices.id', 'DESC');			 // Apply filters based on user role
 			 if (!isAdmin(Auth::User()->role_id)) {
 				if (getUsersRole(Auth::User()->role_id) == "Customer") {
 					if (Gate::allows('invoice_owndata')) {
@@ -134,9 +143,9 @@ class InvoiceController extends Controller
 					}
 				} elseif (getUsersRole(Auth::User()->role_id) == "Employee") {
 					// Employee can see invoices assigned to them
-					$query->join('tbl_services', 'tbl_services.id', '=', 'tbl_invoices.sales_service_id')
-						->where('tbl_services.assign_to', '=', Auth::User()->id)
-						->where('tbl_invoices.branch_id', Auth::User()->branch_id);
+					$query->where('tbl_services.assign_to', '=', Auth::User()->id)
+						->where('tbl_invoices.branch_id', Auth::User()->branch_id)
+						->where('tbl_invoices.type', '=', 0); // Only service invoices for employees
 				} elseif (in_array(getUsersRole(Auth::user()->role_id), ['Support Staff', 'Accountant', 'Branch Admin'])) {
 					if (Gate::allows('invoice_owndata')) {
 						// Support Staff or similar roles with restricted access
@@ -154,13 +163,15 @@ class InvoiceController extends Controller
 			if ($request->has('search.value')) {
 				$searchValue = $request->input('search.value');
 				$query->where(function($q) use ($searchValue) {
-					$q->where('invoice_number', 'LIKE', "%{$searchValue}%")
-						->orWhere('grand_total', 'LIKE', "%{$searchValue}%")
+					$q->where('tbl_invoices.invoice_number', 'LIKE', "%{$searchValue}%")
+						->orWhere('tbl_invoices.grand_total', 'LIKE', "%{$searchValue}%")
 						->orWhere('tbl_invoices.job_card', 'LIKE', "%{$searchValue}%")
-						->orWhere('date', 'LIKE', "%{$searchValue}%")
-						->orWhere('paid_amount', 'LIKE', "%{$searchValue}%")
+						->orWhere('tbl_invoices.date', 'LIKE', "%{$searchValue}%")
+						->orWhere('tbl_invoices.paid_amount', 'LIKE', "%{$searchValue}%")
 						->orWhere('customer.name', 'LIKE', "%{$searchValue}%")
-						->orWhere('payment_status', 'LIKE', "%{$searchValue}%");
+						->orWhere('tbl_invoices.payment_status', 'LIKE', "%{$searchValue}%")
+						->orWhere('service_vehicle.number_plate', 'LIKE', "%{$searchValue}%")
+						->orWhere('sale_vehicle.number_plate', 'LIKE', "%{$searchValue}%");
 				});
 			}
 	
@@ -170,7 +181,16 @@ class InvoiceController extends Controller
 			if ($request->has('order')) {
 				$orderColumn = $request->input('order.0.column');
 				$orderDir = $request->input('order.0.dir');
-				$columns = ['id', 'invoice_number', 'customer_id', 'type', 'sales_service_id', 'grand_total', 'paid_amount', 'date', 'payment_status'];
+				
+				// Define columns based on whether user can delete (has checkbox column)
+				$canDelete = auth()->user()->can('invoice_delete');
+				if ($canDelete) {
+					// Column order: [checkbox], invoice_number, customer_name, invoice_for, number_plate, total_amount, paid_amount, date, status, action
+					$columns = ['tbl_invoices.id', 'tbl_invoices.invoice_number', 'customer.name', 'tbl_invoices.job_card', 'number_plate', 'tbl_invoices.grand_total', 'tbl_invoices.paid_amount', 'tbl_invoices.date', 'tbl_invoices.payment_status', 'tbl_invoices.id'];
+				} else {
+					// Column order: invoice_number, customer_name, invoice_for, number_plate, total_amount, paid_amount, date, status, action
+					$columns = ['tbl_invoices.invoice_number', 'customer.name', 'tbl_invoices.job_card', 'number_plate', 'tbl_invoices.grand_total', 'tbl_invoices.paid_amount', 'tbl_invoices.date', 'tbl_invoices.payment_status', 'tbl_invoices.id'];
+				}
 				
 				if (isset($columns[$orderColumn])) {
 					$query->orderBy($columns[$orderColumn], $orderDir);
@@ -507,11 +527,7 @@ class InvoiceController extends Controller
 						trans('message.Part') : 
 						(getVehicleName($invoice->invoice_for) ?? $invoice->invoice_for),
 					
-					'number_plate' => $invoice->type == 0 ? 
-						(getVehicleNumberPlateFromService($invoice->sales_service_id) ?? trans('message.Not Added')) :
-						($invoice->type == 1 ? 
-							(getVehicleNumberPlateFromSale($invoice->sales_service_id) ?? trans('message.Not Added')) : 
-							'N/A'),
+					'number_plate' => !empty($invoice->number_plate) ? $invoice->number_plate : trans('message.Not Added'),
 					
 					'total_amount' => number_format($invoice->grand_total, 2),
 					'paid_amount' => number_format($invoice->paid_amount, 2),
