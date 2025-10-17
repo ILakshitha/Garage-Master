@@ -106,6 +106,7 @@ class ServicesControler extends Controller
     if ($request->ajax()) {
         $query = Service::query()->leftJoin('users as customer', 'tbl_services.customer_id', '=', 'customer.id') // Join for customer
          ->leftJoin('users as assignee', 'tbl_services.assign_to', '=', 'assignee.id')
+         ->leftJoin('tbl_vehicles', 'tbl_services.vehicle_id', '=', 'tbl_vehicles.id') // Join for vehicle data
             ->select(
                 'tbl_services.id',
                 'tbl_services.job_no',
@@ -120,6 +121,7 @@ class ServicesControler extends Controller
                 'customer.name as customer_name', // Get customer name
                 'assignee.name as assign_to',      // Get assignee name
                 'tbl_services.vehicle_id',
+                'tbl_vehicles.number_plate', // Get number plate directly
                 DB::raw("(SELECT next_date FROM tbl_jobcard_details WHERE tbl_jobcard_details.service_id = tbl_services.id LIMIT 1) as upcoming_service_date")
             ) ->where('tbl_services.soft_delete', '=', 0)->orderBy('id', 'DESC')
             ->distinct(); // Ensure distinct rows to avoid duplicates
@@ -167,7 +169,8 @@ class ServicesControler extends Controller
                     ->orWhere('service_date', 'LIKE', "%{$searchValue}%")
                     ->orWhere('customer.name', 'LIKE', "%{$searchValue}%")
                     ->orWhere('assignee.name', 'LIKE', "%{$searchValue}%")
-                    ->orWhere('charge', 'LIKE', "%{$searchValue}%");
+                    ->orWhere('charge', 'LIKE', "%{$searchValue}%")
+                    ->orWhere('tbl_vehicles.number_plate', 'LIKE', "%{$searchValue}%");
             });
         }
 
@@ -268,7 +271,7 @@ class ServicesControler extends Controller
                     'service_category' => $service->service_category ?: trans('message.Not Added'),
                     'upcoming_service_date' => $service->upcoming_service_date?: trans('message.Not Added'),
                     'assign_to' => getAssignTo($service->assign_name)?: trans('message.Not Added'),
-                    'number_plate' => getVehicleNumberPlateFromService($service->id)?: trans('message.Not Added'),
+                    'number_plate' => $service->number_plate ?: trans('message.Not Added'),
                     'action' => $actionDropdown,
                 ];
             }),
@@ -387,6 +390,12 @@ class ServicesControler extends Controller
         $assigneeFilter = $request->get('assignee_filter');
         if ($assigneeFilter) {
             $query->where('tbl_services.assign_to', $assigneeFilter);
+        }
+        
+        // Number plate filter
+        $numberPlateFilter = $request->get('number_plate_filter');
+        if ($numberPlateFilter) {
+            $query->where('tbl_vehicles.number_plate', 'LIKE', "%{$numberPlateFilter}%");
         }
     }
 
