@@ -122,6 +122,13 @@
                                 </div>
                             </div>
                             
+                            <!-- <div class="col-md-2 col-sm-6 col-xs-12">
+                                <div class="form-group mb-0">
+                                    <label for="number_plate_filter" class="control-label" style="font-size: 11px; margin-bottom: 3px; display: block;">{{ trans('Search by Number Plate') }}</label>
+                                    <input type="text" id="number_plate_filter" class="form-control" placeholder="{{ trans('Enter number plate...') }}" style="height: 32px; font-size: 13px;">
+                                </div>
+                            </div> -->
+                            
                             <div class="col-md-2 col-sm-6 col-xs-12">
                                 <div class="form-group mb-0">
                                     <label for="assignee_filter" class="control-label" style="font-size: 11px; margin-bottom: 3px; display: block;">{{ trans('Filter by Assignee') }}</label>
@@ -240,6 +247,7 @@
             d.start_date = $('#start_date').val();
             d.end_date = $('#end_date').val();
             d.assignee_filter = $('#assignee_filter').val();
+            d.number_plate_filter = $('#number_plate_filter').val();
         }
     },
     columns: [
@@ -339,11 +347,28 @@ $('#apply_filters').on('click', function() {
 $('#clear_filters').on('click', function() {
     $('#days_filter').val('');
     $('#assignee_filter').val('');
+    $('#number_plate_filter').val('');
     $('#start_date').val('');
     $('#end_date').val('');
     $('#start_date_col').hide();
     $('#end_date_col').hide();
     serviceTable.ajax.reload();
+});
+
+// Real-time search for number plate (optional - searches as you type with delay)
+var numberPlateTimeout;
+$('#number_plate_filter').on('keyup', function() {
+    clearTimeout(numberPlateTimeout);
+    numberPlateTimeout = setTimeout(function() {
+        serviceTable.ajax.reload();
+    }, 500); // 500ms delay after user stops typing
+});
+
+// Also trigger search on Enter key press
+$('#number_plate_filter').on('keypress', function(e) {
+    if (e.which === 13) { // Enter key
+        serviceTable.ajax.reload();
+    }
 });
 
 // Function to load assignees
