@@ -188,9 +188,257 @@ function setupDropZone() {
 // Initialize drag and drop when page loads
 document.addEventListener('DOMContentLoaded', function() {
     setupDropZone();
+    initializeVehicleSearch();
+    initializeCustomerSearch();
 });
 
+// Vehicle search functionality
+function initializeVehicleSearch() {
+    const searchInput = $('#vehicle_search');
+    const hiddenInput = $('#vehicle_id');
+    const dropdown = $('#vehicle_dropdown');
+    const vehicleOptions = $('.vehicle-option');
 
+    // Set initial value if vehicle is pre-selected
+    const preSelectedId = hiddenInput.val();
+    if (preSelectedId) {
+        const preSelectedOption = $(`.vehicle-option[data-vehicle-id="${preSelectedId}"]`);
+        if (preSelectedOption.length) {
+            searchInput.val(preSelectedOption.data('number-plate'));
+        }
+    }
+
+    // Handle input events
+    searchInput.on('input focus', function() {
+        const searchTerm = $(this).val().toLowerCase();
+        let hasResults = false;
+
+        // Filter and show matching vehicles
+        vehicleOptions.each(function() {
+            const numberPlate = $(this).data('number-plate').toLowerCase();
+            if (numberPlate.includes(searchTerm) || searchTerm === '') {
+                $(this).show();
+                hasResults = true;
+            } else {
+                $(this).hide();
+            }
+        });
+
+        // Show dropdown if there are results
+        if (hasResults && (searchTerm !== '' || $(this).is(':focus'))) {
+            dropdown.show();
+        } else {
+            dropdown.hide();
+        }
+
+        // Clear hidden input if search doesn't match exactly
+        const exactMatch = vehicleOptions.filter(function() {
+            return $(this).data('number-plate').toLowerCase() === searchTerm;
+        });
+        
+        if (exactMatch.length === 0) {
+            hiddenInput.val('');
+        }
+    });
+
+    // Handle vehicle selection
+    vehicleOptions.on('click', function() {
+        const vehicleId = $(this).data('vehicle-id');
+        const numberPlate = $(this).data('number-plate');
+        
+        searchInput.val(numberPlate);
+        hiddenInput.val(vehicleId);
+        dropdown.hide();
+        
+        // Trigger change event for other scripts that might depend on it
+        hiddenInput.trigger('change');
+    });
+
+    // Hide dropdown when clicking outside
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.vehicle-search-container').length) {
+            dropdown.hide();
+        }
+    });
+
+    // Handle keyboard navigation
+    searchInput.on('keydown', function(e) {
+        const visibleOptions = vehicleOptions.filter(':visible');
+        let currentSelected = visibleOptions.filter('.selected');
+        
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (currentSelected.length === 0) {
+                visibleOptions.first().addClass('selected');
+            } else {
+                currentSelected.removeClass('selected');
+                const next = currentSelected.next(':visible');
+                if (next.length) {
+                    next.addClass('selected');
+                } else {
+                    visibleOptions.first().addClass('selected');
+                }
+            }
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (currentSelected.length === 0) {
+                visibleOptions.last().addClass('selected');
+            } else {
+                currentSelected.removeClass('selected');
+                const prev = currentSelected.prev(':visible');
+                if (prev.length) {
+                    prev.addClass('selected');
+                } else {
+                    visibleOptions.last().addClass('selected');
+                }
+            }
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (currentSelected.length) {
+                currentSelected.click();
+            }
+        } else if (e.key === 'Escape') {
+            dropdown.hide();
+        }
+    });
+
+    // Add hover effects for keyboard navigation
+    vehicleOptions.on('mouseenter', function() {
+        vehicleOptions.removeClass('selected');
+        $(this).addClass('selected');
+    }).on('mouseleave', function() {
+        $(this).removeClass('selected');
+    });
+}
+
+// Customer search functionality
+function initializeCustomerSearch() {
+    const searchInput = $('#customer_search');
+    const hiddenInput = $('#customer_id');
+    const dropdown = $('#customer_dropdown');
+    const customerOptions = $('.customer-option');
+
+    // Set initial value if customer is pre-selected
+    const preSelectedId = hiddenInput.val();
+    if (preSelectedId) {
+        const preSelectedOption = $(`.customer-option[data-customer-id="${preSelectedId}"]`);
+        if (preSelectedOption.length) {
+            const customerName = preSelectedOption.data('customer-name');
+            const customerMobile = preSelectedOption.data('customer-mobile');
+            searchInput.val(`${customerName} - ${customerMobile}`);
+        }
+    }
+
+    // Handle input events
+    searchInput.on('input focus', function() {
+        const searchTerm = $(this).val().toLowerCase();
+        let hasResults = false;
+
+        // Filter and show matching customers
+        customerOptions.each(function() {
+            const customerName = $(this).data('customer-name').toLowerCase();
+            const customerMobile = $(this).data('customer-mobile').toLowerCase();
+            
+            if (customerName.includes(searchTerm) || 
+                customerMobile.includes(searchTerm) || 
+                searchTerm === '') {
+                $(this).show();
+                hasResults = true;
+            } else {
+                $(this).hide();
+            }
+        });
+
+        // Show dropdown if there are results
+        if (hasResults && (searchTerm !== '' || $(this).is(':focus'))) {
+            dropdown.show();
+        } else {
+            dropdown.hide();
+        }
+
+        // Clear hidden input if search doesn't match exactly
+        const exactMatch = customerOptions.filter(function() {
+            const customerName = $(this).data('customer-name').toLowerCase();
+            const customerMobile = $(this).data('customer-mobile').toLowerCase();
+            const fullDisplay = `${customerName} - ${customerMobile}`;
+            return fullDisplay === searchTerm;
+        });
+        
+        if (exactMatch.length === 0) {
+            hiddenInput.val('');
+        }
+    });
+
+    // Handle customer selection
+    customerOptions.on('click', function() {
+        const customerId = $(this).data('customer-id');
+        const customerName = $(this).data('customer-name');
+        const customerMobile = $(this).data('customer-mobile');
+        
+        searchInput.val(`${customerName} - ${customerMobile}`);
+        hiddenInput.val(customerId);
+        dropdown.hide();
+        
+        // Trigger change event for other scripts that might depend on it
+        hiddenInput.trigger('change');
+    });
+
+    // Hide dropdown when clicking outside
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.customer-search-container').length) {
+            dropdown.hide();
+        }
+    });
+
+    // Handle keyboard navigation
+    searchInput.on('keydown', function(e) {
+        const visibleOptions = customerOptions.filter(':visible');
+        let currentSelected = visibleOptions.filter('.selected');
+        
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (currentSelected.length === 0) {
+                visibleOptions.first().addClass('selected');
+            } else {
+                currentSelected.removeClass('selected');
+                const next = currentSelected.next(':visible');
+                if (next.length) {
+                    next.addClass('selected');
+                } else {
+                    visibleOptions.first().addClass('selected');
+                }
+            }
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (currentSelected.length === 0) {
+                visibleOptions.last().addClass('selected');
+            } else {
+                currentSelected.removeClass('selected');
+                const prev = currentSelected.prev(':visible');
+                if (prev.length) {
+                    prev.addClass('selected');
+                } else {
+                    visibleOptions.last().addClass('selected');
+                }
+            }
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (currentSelected.length) {
+                currentSelected.click();
+            }
+        } else if (e.key === 'Escape') {
+            dropdown.hide();
+        }
+    });
+
+    // Add hover effects for keyboard navigation
+    customerOptions.on('mouseenter', function() {
+        customerOptions.removeClass('selected');
+        $(this).addClass('selected');
+    }).on('mouseleave', function() {
+        $(this).removeClass('selected');
+    });
+}
 
 // Vehicle form AJAX submission - Ensure this runs after other scripts
 $(document).ready(function() {
@@ -300,18 +548,36 @@ $(document).ready(function() {
                             // Reset form
                             $('#add_vehi')[0].reset();
                             
-                            // Update vehicle dropdown dynamically (if exists)
-                            var vehicleSelect = $('#vehicle_id');
-                            if (vehicleSelect.length && response.vehicle_data) {
-                                var newOption = new Option(
-                                    response.vehicle_data.number_plate + ' - ' + response.vehicle_data.model_name, 
-                                    response.vehicle_data.id, 
-                                    true, 
-                                    true
-                                );
-                                vehicleSelect.append(newOption).trigger('change');
+                            // Update vehicle search dropdown dynamically (if exists)
+                            if (response.vehicle_data) {
+                                // Add new vehicle option to dropdown
+                                var newVehicleOption = $('<div class="vehicle-option p-2 border-bottom" data-vehicle-id="' + response.vehicle_data.id + '" data-number-plate="' + response.vehicle_data.number_plate + '" style="cursor: pointer;">' + response.vehicle_data.number_plate + '</div>');
+                                $('#vehicle_dropdown').append(newVehicleOption);
+                                
+                                // Set the new vehicle as selected
+                                $('#vehicle_search').val(response.vehicle_data.number_plate);
+                                $('#vehicle_id').val(response.vehicle_data.id);
+                                
+                                // Re-initialize the search functionality for the new option
+                                newVehicleOption.on('click', function() {
+                                    var vehicleId = $(this).data('vehicle-id');
+                                    var numberPlate = $(this).data('number-plate');
+                                    
+                                    $('#vehicle_search').val(numberPlate);
+                                    $('#vehicle_id').val(vehicleId);
+                                    $('#vehicle_dropdown').hide();
+                                    
+                                    $('#vehicle_id').trigger('change');
+                                });
+                                
+                                newVehicleOption.on('mouseenter', function() {
+                                    $('.vehicle-option').removeClass('selected');
+                                    $(this).addClass('selected');
+                                }).on('mouseleave', function() {
+                                    $(this).removeClass('selected');
+                                });
                             } else {
-                                // Fallback: refresh page if vehicle dropdown update fails
+                                // Fallback: refresh page if vehicle data is not available
                                 location.reload();
                             }
                         });
@@ -402,22 +668,30 @@ document.addEventListener('DOMContentLoaded', function() {
         var vehicle = document.getElementById('vehicle_id').value;
 
         // Remove previous error messages
-        document.getElementById('errorlcustomer_id').textContent = '';
+        var customerError = document.getElementById('errorlcustomer_id');
+        if (customerError) {
+            customerError.textContent = '';
+        }
+        
         var vehicleError = document.getElementById('errorlvehicle_id');
         if (!vehicleError) {
-            // Create error span if not exists
-            var vehicleSelect = document.getElementById('vehicle_id');
+            // Create error span if not exists for vehicle search container
+            var vehicleContainer = document.querySelector('.vehicle-search-container');
             vehicleError = document.createElement('span');
             vehicleError.id = 'errorlvehicle_id';
             vehicleError.className = 'color-danger';
-            vehicleSelect.parentNode.appendChild(vehicleError);
+            vehicleError.style.display = 'block';
+            vehicleError.style.marginTop = '5px';
+            vehicleContainer.parentNode.appendChild(vehicleError);
         }
         vehicleError.textContent = '';
 
         // Validate
         var hasError = false;
         if (!owner) {
-            document.getElementById('errorlcustomer_id').textContent = 'Please select owner.';
+            if (customerError) {
+                customerError.textContent = 'Please select owner.';
+            }
             hasError = true;
         }
         if (!vehicle) {
@@ -541,6 +815,112 @@ document.addEventListener('DOMContentLoaded', function() {
         color: #dc3545;
         font-size: 0.875em;
         margin-top: 0.25rem;
+    }
+
+    /* Vehicle Search Dropdown Styles */
+    .vehicle-search-container {
+        position: relative;
+    }
+
+    .vehicle-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #ddd;
+        border-top: none;
+        border-radius: 0 0 4px 4px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        z-index: 1000;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .vehicle-option {
+        padding: 8px 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+        transition: background-color 0.2s;
+    }
+
+    .vehicle-option:hover,
+    .vehicle-option.selected {
+        background-color: #f8f9fa;
+    }
+
+    .vehicle-option:last-child {
+        border-bottom: none;
+    }
+
+    .vehicle-dropdown::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .vehicle-dropdown::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+
+    .vehicle-dropdown::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 3px;
+    }
+
+    .vehicle-dropdown::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
+    }
+
+    /* Customer Search Dropdown Styles */
+    .customer-search-container {
+        position: relative;
+    }
+
+    .customer-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #ddd;
+        border-top: none;
+        border-radius: 0 0 4px 4px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        z-index: 1000;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .customer-option {
+        padding: 8px 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+        transition: background-color 0.2s;
+    }
+
+    .customer-option:hover,
+    .customer-option.selected {
+        background-color: #f8f9fa;
+    }
+
+    .customer-option:last-child {
+        border-bottom: none;
+    }
+
+    .customer-dropdown::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .customer-dropdown::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+
+    .customer-dropdown::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 3px;
+    }
+
+    .customer-dropdown::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
     }
 
 
@@ -734,24 +1114,35 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="row col-md-6 col-lg-6 col-xl-6 col-xxl-6 col-sm-6 col-xs-6">
                                     <label class="control-label col-md-4 col-lg-4 col-xl-4 col-xxl-4 col-sm-4 col-xs-4" for="first-name">{{ trans('Vehicle Number') }} <label class="color-danger">*</label></label>
                                     <div class="col-md-6 col-lg-6 col-xl-6 col-xxl-6 col-sm-6 col-xs-6">
-                                    
-
-                                        <!-- select with search option  -->
-                                        <select name="Vehiclename" id="vehicle_id"
-                                            class="form-control select_vehicle select_vehicle_auto_search form-select"
-                                            vehicle_url="{!! url('') !!}?v_id={{ request('v_id') }}"
-                                            required>
-                                            <option value="">{{ trans('message.Select Vehicle') }}</option>
-                                            @if (!empty($vehicles))
-                                            @foreach ($vehicles as $vehicle)
-                                            <option value="{{ $vehicle->id }}"
-                                                {{ request()->input('v_id') == $vehicle->id ? 'selected' : '' }}>
-                                                {{ $vehicle->number_plate }} 
-                                            </option>
-                                            @endforeach
-                                            @endif
-                                        </select>
-
+                                        <div class="vehicle-search-container position-relative">
+                                            <!-- Search input field -->
+                                            <input type="text" 
+                                                   id="vehicle_search" 
+                                                   class="form-control" 
+                                                   placeholder="{{ trans('Search by number plate...') }}" 
+                                                   autocomplete="off">
+                                            
+                                            <!-- Hidden input to store selected vehicle ID -->
+                                            <input type="hidden" 
+                                                   name="Vehiclename" 
+                                                   id="vehicle_id" 
+                                                   value="{{ request()->input('v_id') }}" 
+                                                   required>
+                                            
+                                            <!-- Dropdown results -->
+                                            <div id="vehicle_dropdown" class="vehicle-dropdown position-absolute w-100" style="display: none; z-index: 1000; background: white; border: 1px solid #ddd; max-height: 200px; overflow-y: auto;">
+                                                @if (!empty($vehicles))
+                                                    @foreach ($vehicles as $vehicle)
+                                                        <div class="vehicle-option p-2 border-bottom" 
+                                                             data-vehicle-id="{{ $vehicle->id }}" 
+                                                             data-number-plate="{{ $vehicle->number_plate }}"
+                                                             style="cursor: pointer;">
+                                                            {{ $vehicle->number_plate }}
+                                                        </div>
+                                                    @endforeach
+                                                @endif
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="col-md-2 col-lg-2 col-xl-2 col-xxl-2 col-sm-2 col-xs-2 addremove vehiclemodel mt-0">
                                         <button type="button" data-bs-toggle="new-modal" data-bs-target="#vehiclemymodel" class="btn btn-outline-secondary vehiclemodel fl margin-left-0">{{ trans('+') }}</button>
@@ -822,16 +1213,37 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="row col-md-6 col-lg-6 col-xl-6 col-xxl-6 col-sm-6 col-xs-6 ">
                             <label class="control-label col-md-4 col-lg-4 col-xl-4 col-xxl-4 col-sm-4 col-xs-4" for="customer_id">{{ trans('Select Owner') }} <label class="color-danger">*</label></label>
                             <div class="col-md-6 col-lg-6 col-xl-6 col-xxl-6 col-sm-6 col-xs-6">
-                                <select class="form-control select_customer form-select" id="customer_id" name="customer_id" required>
-                                    <option value="">{{ trans('Select Owner') }}</option>
-                                    @if (!empty($customer))
-                                        @foreach ($customer as $customers)
-                                            <option value="{{ $customers->id }}" {{ old('customer_id') == $customers->id ? 'selected' : '' }}>
-                                                {{ getCustomerName($customers->id) }} - {{ getCustomerMobile($customers->id) }}
-                                            </option>
-                                        @endforeach
-                                    @endif
-                                </select>
+                                <div class="customer-search-container position-relative">
+                                    <!-- Search input field -->
+                                    <input type="text" 
+                                           id="customer_search" 
+                                           class="form-control" 
+                                           placeholder="{{ trans('Search by name or mobile...') }}" 
+                                           autocomplete="off">
+                                    
+                                    <!-- Hidden input to store selected customer ID -->
+                                    <input type="hidden" 
+                                           name="customer_id" 
+                                           id="customer_id" 
+                                           value="{{ old('customer_id') }}" 
+                                           required>
+                                    
+                                    <!-- Dropdown results -->
+                                    <div id="customer_dropdown" class="customer-dropdown position-absolute w-100" style="display: none; z-index: 1000; background: white; border: 1px solid #ddd; max-height: 200px; overflow-y: auto;">
+                                        @if (!empty($customer))
+                                            @foreach ($customer as $customers)
+                                                <div class="customer-option p-2 border-bottom" 
+                                                     data-customer-id="{{ $customers->id }}" 
+                                                     data-customer-name="{{ getCustomerName($customers->id) }}"
+                                                     data-customer-mobile="{{ getCustomerMobile($customers->id) }}"
+                                                     style="cursor: pointer;">
+                                                    <div class="fw-bold">{{ getCustomerName($customers->id) }}</div>
+                                                    <div class="text-muted small">{{ getCustomerMobile($customers->id) }}</div>
+                                                </div>
+                                            @endforeach
+                                        @endif
+                                    </div>
+                                </div>
                                 <span class="color-danger" id="errorlcustomer_id"></span>
                             </div>
                             <div class="col-md-2 col-lg-2 col-xl-2 col-xxl-2 col-sm-2 col-xs-2 addremove">
