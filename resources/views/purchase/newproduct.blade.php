@@ -17,21 +17,26 @@
       @endif
     </select>
   </td>
-  <td>
-    <input type="hidden"
-      value=""
-      name="product[tr_id][]" />
-    <select name="product[product_id][]"
-      class="form-control form-select productid select_productname_<?php echo $ids; ?>"
-      row_did="<?php echo $ids; ?>"
-      url="<?php echo url('purchase/add/getproduct'); ?>"
-      data-id="<?php echo $ids; ?>"
-      style="width:100%;"
-      required="required">
-      <option value="">{{ trans('message.Select Product') }}</option>
-      <?php  foreach($product as $products) { ?>
-      <option value="<?php echo $products->id; ?>"><?php echo $products->name; ?></option> <?php } ?>
-    </select>
+  <td class="my-form-group">
+    <input type="hidden" value="" name="product[tr_id][]" />
+    <div class="select-wrapper searchable-select-wrapper">
+      <input type="text" class="form-control searchable-select-input" placeholder="{{ trans('message.Search Product') }}" autocomplete="off" style="width:100%;">
+      <select name="product[product_id][]"
+        class="form-control form-select productid select_productname_<?php echo $ids; ?> searchable-select"
+        row_did="<?php echo $ids; ?>"
+        url="<?php echo url('purchase/add/getproduct'); ?>"
+        data-id="<?php echo $ids; ?>"
+        style="width:100%; display: none;"
+        required="required">
+        <option value="">{{ trans('message.Select Product') }}</option>
+        <?php  foreach($product as $products) { ?>
+        <option value="<?php echo $products->id; ?>"><?php echo $products->name; ?></option> <?php } ?>
+      </select>
+      <div class="searchable-dropdown" style="display: none;">
+        <div class="searchable-dropdown-list"></div>
+      </div>
+      <div class="arrow-icon searchable-arrow"></div>
+    </div>
   </td>
   <td>
     <input type="number"

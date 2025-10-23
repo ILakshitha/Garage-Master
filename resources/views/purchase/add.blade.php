@@ -159,6 +159,97 @@
       font-size: 14px !important;
     }
 }
+
+/* Searchable Select Styles */
+.searchable-select-wrapper {
+  position: relative;
+}
+
+.searchable-select-input {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px 30px 8px 12px;
+  font-size: 14px;
+  cursor: text;
+}
+
+.searchable-select-input:focus {
+  outline: none;
+  border-color: #337ab7;
+  box-shadow: 0 0 5px rgba(51, 122, 183, 0.3);
+}
+
+.searchable-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.searchable-dropdown-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+}
+
+.searchable-dropdown-item:hover,
+.searchable-dropdown-item.highlighted {
+  background-color: #f5f5f5;
+}
+
+.searchable-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.searchable-dropdown-item.selected {
+  background-color: #337ab7;
+  color: white;
+}
+
+.searchable-arrow {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid #666;
+}
+
+.searchable-dropdown-empty {
+  padding: 8px 12px;
+  color: #999;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .searchable-dropdown {
+    max-height: 150px;
+  }
+  
+  .searchable-dropdown-item {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+  
+  .searchable-select-input {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 10px 30px 10px 12px;
+  }
+}
 </style>
 
 <!-- page content -->
@@ -259,7 +350,7 @@
                 </h4>
               </div>
             </div>
-            <div class="col-md-12 col-lg-12 col-xl-12 col-xxl-12 col-sm-12 col-xs-12 table-responsive float-none ms-0">
+            <div class="col-md-12 col-lg-12 col-xl-12 col-xxl-12 col-sm-12 col-xs-12 table-responsive float-none ms-0" style="height: 200px; overflow-y: auto;">
               <table class="table table-bordered adddatatable" id="tab_taxes_detail" align="center">
                 <thead>
                   <tr>
@@ -283,11 +374,15 @@
                       </div>
                     </td>
                     <td class="my-form-group">
-                      <div class="select-wrapper">
-                        <select name="product[product_id][]" class="form-control productid select_productname_1 form-select" url="{!! url('purchase/add/getproduct') !!}" row_did="1" data-id="1" style="width:100%;" required="required">
+                      <div class="select-wrapper searchable-select-wrapper">
+                        <input type="text" class="form-control searchable-select-input" placeholder="{{ trans('message.Search Product') }}" autocomplete="off" style="width:100%;">
+                        <select name="product[product_id][]" class="form-control productid select_productname_1 form-select searchable-select" url="{!! url('purchase/add/getproduct') !!}" row_did="1" data-id="1" style="width:100%; display: none;" required="required">
                           <option value="">{{ trans('message.Select Product') }}</option>
                         </select>
-                        <div class="arrow-icon"></div>
+                        <div class="searchable-dropdown" style="display: none;">
+                          <div class="searchable-dropdown-list"></div>
+                        </div>
+                        <div class="arrow-icon searchable-arrow"></div>
                       </div>
                     </td>
                     <td>
@@ -454,6 +549,10 @@
  /* script */
   $(document).ready(function() {
 
+    // Initialize searchable dropdowns on page load
+    $('.searchable-select').each(function() {
+      updateSearchableDropdown($(this));
+    });
 
     $('body').on('change', '.select_producttype', function() {
       var row_id = $(this).attr('row_did');
@@ -467,9 +566,177 @@
           m_id: m_id
         },
         success: function(response) {
-          $('.select_productname_' + row_id).html(response);
+          var $select = $('.select_productname_' + row_id);
+          $select.html(response);
+          
+          // Update searchable dropdown after manufacturer change
+          updateSearchableDropdown($select);
+          
+          // Reset search input
+          var $wrapper = $select.closest('.searchable-select-wrapper');
+          $wrapper.find('.searchable-select-input').val('').attr('placeholder', 'Search Product');
+          $wrapper.find('.searchable-dropdown').hide();
         }
       });
+    });
+
+    // Function to update searchable dropdown with current select options
+    function updateSearchableDropdown($select) {
+      var $wrapper = $select.closest('.searchable-select-wrapper');
+      var $dropdown = $wrapper.find('.searchable-dropdown-list');
+      
+      $dropdown.empty();
+      
+      $select.find('option').each(function() {
+        var $option = $(this);
+        if ($option.val() !== '') {
+          var $item = $('<div class="searchable-dropdown-item" data-value="' + $option.val() + '">' + $option.text() + '</div>');
+          $dropdown.append($item);
+        }
+      });
+    }
+
+    // Searchable select functionality
+    var selectedIndex = -1;
+    
+    // Show dropdown when input is focused or clicked
+    $('body').on('focus click', '.searchable-select-input', function() {
+      var $input = $(this);
+      var $wrapper = $input.closest('.searchable-select-wrapper');
+      var $dropdown = $wrapper.find('.searchable-dropdown');
+      var $select = $wrapper.find('.searchable-select');
+      
+      // Hide other dropdowns
+      $('.searchable-dropdown').not($dropdown).hide();
+      
+      // Update dropdown with current options
+      updateSearchableDropdown($select);
+      
+      // Show dropdown if there are options
+      if ($wrapper.find('.searchable-dropdown-item').length > 0) {
+        $dropdown.show();
+        selectedIndex = -1;
+      }
+    });
+
+    // Filter dropdown items based on search input
+    $('body').on('input', '.searchable-select-input', function() {
+      var $input = $(this);
+      var searchTerm = $input.val().toLowerCase();
+      var $wrapper = $input.closest('.searchable-select-wrapper');
+      var $dropdown = $wrapper.find('.searchable-dropdown');
+      var $items = $wrapper.find('.searchable-dropdown-item');
+      
+      var visibleCount = 0;
+      
+      $items.each(function() {
+        var $item = $(this);
+        var text = $item.text().toLowerCase();
+        
+        if (text.includes(searchTerm)) {
+          $item.show();
+          visibleCount++;
+        } else {
+          $item.hide();
+        }
+      });
+      
+      // Show/hide dropdown based on visible items
+      if (visibleCount > 0) {
+        $dropdown.show();
+      } else {
+        $dropdown.hide();
+      }
+      
+      selectedIndex = -1;
+      $items.removeClass('highlighted');
+    });
+
+    // Handle item selection
+    $('body').on('click', '.searchable-dropdown-item', function() {
+      var $item = $(this);
+      var $wrapper = $item.closest('.searchable-select-wrapper');
+      var $input = $wrapper.find('.searchable-select-input');
+      var $select = $wrapper.find('.searchable-select');
+      var $dropdown = $wrapper.find('.searchable-dropdown');
+      
+      var value = $item.data('value');
+      var text = $item.text();
+      
+      // Update input and select
+      $input.val(text);
+      $select.val(value).trigger('change');
+      
+      // Hide dropdown
+      $dropdown.hide();
+      selectedIndex = -1;
+    });
+
+    // Keyboard navigation for searchable dropdown
+    $('body').on('keydown', '.searchable-select-input', function(e) {
+      var $input = $(this);
+      var $wrapper = $input.closest('.searchable-select-wrapper');
+      var $dropdown = $wrapper.find('.searchable-dropdown');
+      var $items = $wrapper.find('.searchable-dropdown-item:visible');
+      
+      if (!$dropdown.is(':visible') || $items.length === 0) return;
+      
+      switch(e.keyCode) {
+        case 38: // Up arrow
+          e.preventDefault();
+          selectedIndex = selectedIndex > 0 ? selectedIndex - 1 : $items.length - 1;
+          break;
+        case 40: // Down arrow
+          e.preventDefault();
+          selectedIndex = selectedIndex < $items.length - 1 ? selectedIndex + 1 : 0;
+          break;
+        case 13: // Enter
+          e.preventDefault();
+          if (selectedIndex >= 0) {
+            $items.eq(selectedIndex).click();
+          }
+          return;
+        case 27: // Escape
+          $dropdown.hide();
+          selectedIndex = -1;
+          return;
+        default:
+          return;
+      }
+      
+      // Update visual selection
+      $items.removeClass('highlighted');
+      if (selectedIndex >= 0) {
+        $items.eq(selectedIndex).addClass('highlighted');
+        
+        // Scroll highlighted item into view
+        var $highlighted = $items.eq(selectedIndex);
+        var dropdownTop = $dropdown.scrollTop();
+        var dropdownBottom = dropdownTop + $dropdown.height();
+        var itemTop = $highlighted.position().top + dropdownTop;
+        var itemBottom = itemTop + $highlighted.outerHeight();
+        
+        if (itemTop < dropdownTop) {
+          $dropdown.scrollTop(itemTop);
+        } else if (itemBottom > dropdownBottom) {
+          $dropdown.scrollTop(itemBottom - $dropdown.height());
+        }
+      }
+    });
+
+    // Hide dropdown when clicking outside
+    $(document).on('click', function(e) {
+      if (!$(e.target).closest('.searchable-select-wrapper').length) {
+        $('.searchable-dropdown').hide();
+        selectedIndex = -1;
+      }
+    });
+
+    // Clear search when manufacturer changes
+    $('body').on('change', '.select_producttype', function() {
+      var $row = $(this).closest('tr');
+      $row.find('.searchable-select-input').val('').attr('placeholder', 'Search Product');
+      $row.find('.searchable-dropdown').hide();
     });
 
 
@@ -531,12 +798,15 @@
     });
 
 
-    $('body').on('change', '.productid', '.qty', function() {
+    $('body').on('change', '.productid', function() {
       var row_id = $(this).attr('row_did');
       var p_id = $(this).val();
       var qty = $('.qty_' + row_id).val();
       var price = $('.price_' + row_id).val();
       var url = $(this).attr('url');
+
+      // Skip if no product selected
+      if (!p_id) return;
 
       $.ajax({
         type: 'GET',
