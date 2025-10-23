@@ -375,7 +375,7 @@
                     </td>
                     <td class="my-form-group">
                       <div class="select-wrapper searchable-select-wrapper">
-                        <input type="text" class="form-control searchable-select-input" placeholder="{{ trans('message.Search Product') }}" autocomplete="off" style="width:100%;">
+                        <input type="text" class="form-control searchable-select-input" placeholder="{{ trans('Search Product') }}" autocomplete="off" style="width:100%;">
                         <select name="product[product_id][]" class="form-control productid select_productname_1 form-select searchable-select" url="{!! url('purchase/add/getproduct') !!}" row_did="1" data-id="1" style="width:100%; display: none;" required="required">
                           <option value="">{{ trans('message.Select Product') }}</option>
                         </select>
