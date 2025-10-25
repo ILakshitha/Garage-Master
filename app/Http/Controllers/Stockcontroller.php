@@ -51,6 +51,7 @@ class Stockcontroller extends Controller
 				->where('tbl_stock_records.branch_id', '=', $currentUser->branch_id)
 				->orderBy('tbl_stock_records.id', 'DESC')->get();    
 		}
+		// die($stock);
 		return view('stoke.list', compact('stock'));
 	}
 

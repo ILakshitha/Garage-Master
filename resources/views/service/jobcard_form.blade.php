@@ -101,6 +101,137 @@
     overflow: hidden;
 }
 
+/* Parts Sell Table Styles */
+.adddatatable {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.adddatatable th,
+.adddatatable td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    vertical-align: middle;
+}
+
+.adddatatable th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+
+.adddatatable select,
+.adddatatable input {
+    width: 100%;
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.adddatatable input[readonly] {
+    background-color: #f9f9f9;
+}
+
+/* Button styles for part sell */
+#add_new_part_product {
+    margin-left: 10px;
+    padding: 5px 10px;
+}
+
+/* Error message styles for parts sell */
+.help-block.error-help-block {
+    color: #a94442;
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+.has-error .form-control {
+    border-color: #a94442;
+}
+
+@media (max-width: 768px) {
+    .table-responsive {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        margin-bottom: 15px !important;
+    }
+    
+    .adddatatable {
+        min-width: 800px !important;
+        width: 100% !important;
+    }
+    
+    .adddatatable th,
+    .adddatatable td {
+        white-space: nowrap !important;
+        min-width: 120px !important;
+        padding: 8px 5px !important;
+        font-size: 12px !important;
+    }
+    
+    /* Specific column widths */
+    .adddatatable th:nth-child(1), /* Manufacturer Name */
+    .adddatatable td:nth-child(1) {
+        min-width: 150px !important;
+    }
+    
+    .adddatatable th:nth-child(2), /* Product Name */
+    .adddatatable td:nth-child(2) {
+        min-width: 180px !important;
+    }
+    
+    .adddatatable th:nth-child(3), /* Quantity */
+    .adddatatable td:nth-child(3) {
+        min-width: 100px !important;
+    }
+    
+    .adddatatable th:nth-child(4), /* Price */
+    .adddatatable td:nth-child(4) {
+        min-width: 120px !important;
+    }
+    
+    .adddatatable th:nth-child(5), /* Amount */
+    .adddatatable td:nth-child(5) {
+        min-width: 120px !important;
+    }
+    
+    .adddatatable th:nth-child(6), /* Action */
+    .adddatatable td:nth-child(6) {
+        min-width: 80px !important;
+    }
+    
+    /* Select dropdown styling in mobile */
+    .adddatatable select {
+        width: 100% !important;
+        min-width: 140px !important;
+        font-size: 14px !important;
+    }
+    
+    .adddatatable input {
+        width: 100% !important;
+        min-width: 80px !important;
+        font-size: 14px !important;
+    }
+}
+
+@media (max-width: 540px) {
+    .adddatatable {
+        min-width: 700px !important;
+    }
+    
+    .adddatatable th,
+    .adddatatable td {
+        font-size: 11px !important;
+        padding: 6px 3px !important;
+    }
+    
+    .adddatatable select,
+    .adddatatable input {
+        font-size: 12px !important;
+        padding: 4px !important;
+    }
+}
+
 .tab-menu {
     display: flex;
     background-color: transparent; /* Remove background color of tabs */
@@ -413,6 +544,84 @@
 
                             </div>
                         </div>
+                        
+                        <!-- Parts Sell Section Start -->
+                        <div class="col-md-12 col-lg-12 col-xl-12 col-xxl-12 col-sm-12 col-xs-12 space1">
+                            <p class="col-md-12 col-lg-12 col-xl-12 col-xxl-12 col-sm-12 col-xs-12 ln_solid"></p>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-10 col-lg-10 col-xl-10 col-xxl-10 col-sm-10 col-xs-10 header">
+                                <h3><b>{{ trans('message.Part Sells') }}</b>
+                                <button type="button" id="add_new_part_product" class="btn btn-outline-secondary" url="{{ url('sales_part/add/getproductname') }}">{{ trans('+') }} </button>
+                                </h3>   
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-12 col-xs-12 col-sm-12 form-group table-responsive ms-0">
+                            <table class="table table-bordered adddatatable" id="tab_part_sell_detail" align="center">
+                                <thead>
+                                    <tr>
+                                        <th class="actionre">{{ trans('message.Manufacturer Name') }}</th>
+                                        <th class="actionre">{{ trans('message.Product Name') }}</th>
+                                        <th class="actionre">{{ trans('message.Quantity') }}</th>
+                                        <th class="actionre" style="width:10%;">{{ trans('message.Price') }}
+                                            (<?php echo getCurrencySymbols(); ?>)</th>
+                                        <th class="actionre" style="width:13%;">{{ trans('message.Amount') }}
+                                            (<?php echo getCurrencySymbols(); ?>)</th>
+                                        <th class="actionre">{{ trans('message.Action') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr id="part_row_id_1">
+                                        <td class="tbl_td_selectManufac_error_part_1">
+                                            <select class="form-control select_part_producttype select_part_producttype_1 form-select" name="part_product[Manufacturer_id][]" m_url="{{ url('/sales_part/productitem') }}" row_did="1" data-id="1" id="">
+                                                <option value="">
+                                                    -{{ trans('message.Select Manufacturing Name') }}-</option>
+                                                @if (!empty($manufacture_name))
+                                                @foreach ($manufacture_name as $manufacture_nm)
+                                                <option value="{{ $manufacture_nm->id }}">
+                                                    {{ $manufacture_nm->type }}
+                                                </option>
+                                                @endforeach
+                                                @endif
+                                            </select>
+                                            <span id="select_part_producttype_error_1" class="help-block error-help-block color-danger" style="display: none">{{ trans('message.Manufacturer name is required.') }}</span>
+                                        </td>
+                                        <td class="tbl_td_selectProductname_error_part_1">
+                                            <select name="part_product[product_id][]" class="form-control part_productid select_part_productname_1 form-select" id="part_productid" url="{{ url('/sales_part/getprice') }}" row_did="1" data-id="1">
+                                                <option value="">{{ trans('message.--Select Product--') }}
+                                                </option>
+                                                @if (!empty($brand))
+                                                @foreach ($brand as $brands)
+                                                <option value="{{ $brands->id }}">{{ $brands->name }}
+                                                </option>
+                                                @endforeach
+                                                @endif
+                                            </select>
+                                            <span id="select_part_productname_error_1" class="help-block error-help-block color-danger" style="display: none">{{ trans('message.Product name is required.') }}</span>
+                                        </td>
+                                        <td class="tbl_td_quantity_error_part_1">
+                                            <input type="number" name="part_product[qty][]" url="{!! url('purchase/add/getqty') !!}" prd_url="{{ url('/sale_part/get_available_product') }}" class="part_quantity form-control part_qty part_qty_1 qtyt" id="part_qty_1" autocomplete="off" row_id="1" value="" maxlength="8">
+                                            <span id="part_quantity_error_1" class="help-block error-help-block color-danger" style="display: none">{{ trans('message.Quantity is required.') }}</span>
+                                        </td>
+                                        <td class="tbl_td_price_error_part_1">
+                                            <input type="text" name="part_product[price][]" class="part_product form-control part_prices part_price_1" value="" id="part_price_1" row_id="1" style="width:100%;" readonly="true">
+                                            <span id="part_price_error_1" class="help-block error-help-block color-danger" style="display: none">{{ trans('message.Price is required.') }}</span>
+                                        </td>
+                                        <td class="tbl_td_totaPrice_error_part_1">
+                                            <input type="text" name="part_product[total_price][]" class="part_product form-control part_total_price part_total_price_1" value="" style="width:100%;" id="part_total_price_1" readonly="true">
+                                            <span id="part_total_price_error_1" class="help-block error-help-block color-danger" style="display: none">{{ trans('message.Total price is required.') }}</span>
+                                        </td>
+                                        <td align="center">
+                                            <input type="hidden" value="1" name="part_row_number" class="part_row_number">
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Parts Sell Section End -->
+                        
                         <div class="col-md-12 col-lg-12 col-xl-12 col-xxl-12 col-sm-12 col-xs-12 space1">
                             <p class="col-md-12 col-lg-12 col-xl-12 col-xxl-12 col-sm-12 col-xs-12 ln_solid"></p>
                         </div>
@@ -1493,6 +1702,294 @@ $(document).ready(function () {
                 $('#submitButton').removeClass('disabled');
             }
             $('#submitButton').prop('disabled', !pDateValue);
+        });
+
+        // Parts Sell Form JavaScript Functions
+        // Add new parts sell product row
+        $("#add_new_part_product").click(function() {
+            var url = $(this).attr('url');
+            var row_len = jQuery(".part_row_number").length;
+            if (row_len > 0) {
+                var num = jQuery(".part_row_number:last").val();
+                var row_id = parseInt(num) + 1;
+            } else {
+                var row_id = 1;
+            }
+
+            var msg16 = "{{ trans('app.An error occurred :') }}";
+            $.ajax({
+                type: 'GET',
+                url: url,
+                data: {
+                    row_id: row_id
+                },
+                beforeSend: function() {
+                    $("#add_new_part_product").prop('disabled', true);
+                },
+                success: function(response) {
+                    // Modify response HTML to use part-specific IDs and classes and update URLs
+                    var modifiedHtml = response.html
+                        .replace(/row_id_/g, 'part_row_id_')
+                        .replace(/select_producttype_/g, 'select_part_producttype_')
+                        .replace(/select_productname_/g, 'select_part_productname_')
+                        .replace(/qty_/g, 'part_qty_')
+                        .replace(/price_/g, 'part_price_')
+                        .replace(/total_price_/g, 'part_total_price_')
+                        .replace(/productid/g, 'part_productid')
+                        .replace(/quantity/g, 'part_quantity')
+                        .replace(/product\[/g, 'part_product[')
+                        .replace(/row_number/g, 'part_row_number')
+                        .replace(/class="product /g, 'class="part_product ')
+                        .replace(/class="product_delete/g, 'class="part_product_delete')
+                        .replace(/class="product form-control prices/g, 'class="part_product form-control part_prices')
+                        .replace(/tbl_td_selectManufac_error_/g, 'tbl_td_selectManufac_error_part_')
+                        .replace(/tbl_td_selectProductname_error_/g, 'tbl_td_selectProductname_error_part_')
+                        .replace(/tbl_td_quantity_error_/g, 'tbl_td_quantity_error_part_')
+                        .replace(/tbl_td_price_error_/g, 'tbl_td_price_error_part_')
+                        .replace(/tbl_td_totaPrice_error_/g, 'tbl_td_totaPrice_error_part_')
+                        .replace(/\/purchase\/producttype\/names/g, '/sales_part/productitem')
+                        .replace(/purchase\/add\/getproduct/g, 'sales_part/getprice');
+
+                    $("#tab_part_sell_detail > tbody").append(modifiedHtml);
+                    $("#add_new_part_product").prop('disabled', false);
+                    
+                    return false;
+                },
+                error: function(e) {
+                    alert(msg16 + " " + e.responseText);
+                    console.log(e);
+                    $("#add_new_part_product").prop('disabled', false);
+                }
+            });
+        });
+
+        // Part product delete functionality
+        $('body').on('click', '.part_product_delete', function() {
+            var row_id = $(this).attr('data-id');
+            
+            $('table#tab_part_sell_detail tr#part_row_id_' + row_id).fadeOut(function() {
+                $(this).remove();
+            });
+            
+            return false;
+        });
+
+        // Part product selection change handler
+        $('body').on('change', '.part_productid', function() {
+            var row_id = $(this).attr('row_did');
+            var p_id = $(this).val();
+            var url = $(this).attr('url');
+            var msg17 = "{{ trans('message.An error occurred :') }}";
+            
+            if (p_id == '') {
+                $('.part_price_' + row_id).val('');
+                $('.part_total_price_' + row_id).val('');
+                $('.part_qty_' + row_id).val('');
+                return;
+            }
+            
+            $.ajax({
+                type: 'GET',
+                url: url,
+                data: {
+                    vehicale_id: p_id  // Changed from p_id to vehicale_id to match SalesPartcontroller
+                },
+                success: function(response) {
+                    var json_obj = response;
+                    var price = json_obj['price'];
+                    
+                    $('.part_price_' + row_id).val(price);
+                    $('.part_qty_' + row_id).val(1);
+                    $('.part_total_price_' + row_id).val(price);
+                    
+                    $('#select_part_productname_error_' + row_id).css({"display": "none"});
+                    $('.tbl_td_selectProductname_error_part_' + row_id).removeClass('has-error');
+                },
+                error: function(e) {
+                    alert(msg17 + " " + e.responseText);
+                    console.log(e);
+                }
+            });
+        });
+
+        // Part quantity input handler with stock validation
+        $('body').on('input', '.part_qty', function(event) {
+            var row_id = $(this).attr('row_id');
+            var productid = $('.select_part_productname_' + row_id).find(":selected").val();
+            var qty = $(this).val();
+            var price = $('.part_price_' + row_id).val();
+            var url = $(this).attr('prd_url');
+            var msg21 = "{{ trans('message.Product Not Available') }}";
+            var msg22 = "{{ trans('message.Current Stock :') }}";
+            var msg20 = "{{ trans('message.First select product name') }}";
+
+            if (productid == '' || productid == null) {
+                alert(msg20);
+                $('.part_qty_' + row_id).val('');
+                return;
+            }
+
+            if (/\D/g.test(qty) || qty <= 0) {
+                $('.part_qty_' + row_id).val('');
+                $('#part_quantity_error_' + row_id).css({"display": ""});
+                $('.tbl_td_quantity_error_part_' + row_id).addClass('has-error');
+                $('.part_total_price_' + row_id).val('');
+                return;
+            }
+
+            $('#part_quantity_error_' + row_id).css({"display": "none"});
+            $('.tbl_td_quantity_error_part_' + row_id).removeClass('has-error');
+
+            var total_price = parseFloat(price) * parseFloat(qty);
+            $('.part_total_price_' + row_id).val(total_price.toFixed(2));
+
+            clearTimeout($(this).data('timeout'));
+            $(this).data('timeout', setTimeout(function() {
+                $.ajax({
+                    type: 'GET',
+                    url: url,
+                    data: {
+                        qty: qty,
+                        productid: productid
+                    },
+                    success: function(response) {
+                        if (response.success == '1') {
+                            swal({
+                                title: msg21 + '\n' + msg22 + ' ' + response.currentStock,
+                                cancelButtonColor: '#C1C1C1',
+                                buttons: {
+                                    cancel: msg10,
+                                },
+                                dangerMode: true,
+                            });
+
+                            $('.part_qty_' + row_id).val('');
+                            $('.part_total_price_' + row_id).val('');
+                        }
+                    },
+                    error: function(e) {
+                        console.log('Stock check error:', e);
+                    }
+                });
+            }, 500));
+        });
+
+        // Part quantity change handler
+        $('body').on('change', '.part_qty', function() {
+            var row_id = $(this).attr('row_id');
+            var qty = $(this).val();
+            var price = $('.part_price_' + row_id).val();
+            
+            if (qty == '' || qty <= 0) {
+                $('.part_total_price_' + row_id).val('');
+                return;
+            }
+            
+            var total_price = parseFloat(price) * parseFloat(qty);
+            $('.part_total_price_' + row_id).val(total_price.toFixed(2));
+        });
+
+        // Part manufacturer selection handler
+        $('body').on('change', '.select_part_producttype', function() {
+            var row_id = $(this).attr('row_did');
+            var m_id = $(this).val();
+            var url = $(this).attr('m_url');
+            
+            $('.select_part_productname_' + row_id).html('<option value="">{{ trans("message.--Select Product--") }}</option>');
+            $('.part_price_' + row_id).val('');
+            $('.part_qty_' + row_id).val('');
+            $('.part_total_price_' + row_id).val('');
+            
+            if (m_id == '') {
+                return;
+            }
+            
+            $.ajax({
+                type: 'GET',
+                url: url,
+                data: {
+                    m_id: m_id
+                },
+                success: function(response) {
+                    $('.select_part_productname_' + row_id).html(response);
+                    
+                    $('#select_part_producttype_error_' + row_id).css({"display": "none"});
+                    $('.tbl_td_selectManufac_error_part_' + row_id).removeClass('has-error');
+                },
+                error: function(e) {
+                    console.log('Manufacturer change error:', e);
+                }
+            });
+        });
+
+        // Part manufacturer selection change handler
+        $('body').on('change', '.select_part_producttype', function() {
+            var row_id = $(this).attr('row_did');
+            var m_id = $(this).val();
+            var url = $(this).attr('m_url');
+            
+            if (m_id == '') {
+                return;
+            }
+            
+            $.ajax({
+                type: 'GET',
+                url: url,
+                data: {
+                    m_id: m_id
+                },
+                success: function(response) {
+                    $('.select_part_productname_' + row_id).html(response);
+                    
+                    $('#select_part_producttype_error_' + row_id).css({"display": "none"});
+                    $('.tbl_td_selectManufac_error_part_' + row_id).removeClass('has-error');
+                },
+                error: function(e) {
+                    console.log('Manufacturer change error:', e);
+                }
+            });
+        });
+
+        // Part price change handler
+        $('body').on('change', '.part_prices', function() {
+            var row_id = $(this).attr('row_id');
+            var qty = $('.part_qty_' + row_id).val();
+            var price = $(this).val();
+            
+            var regex = /^\d*\.?\d{0,2}$/;
+
+            if (!regex.test(price) || price == 0 || price == null) {
+                $('.part_price_' + row_id).val("");
+                $('#part_price_error_' + row_id).css({"display": ""});
+                $('.tbl_td_price_error_part_' + row_id).addClass('has-error');
+                $('.part_total_price_' + row_id).val('');
+            } else {
+                $('#part_price_error_' + row_id).css({"display": "none"});
+                $('.tbl_td_price_error_part_' + row_id).removeClass('has-error');
+                
+                if (qty && qty > 0) {
+                    var total_price = parseFloat(price) * parseFloat(qty);
+                    $('.part_total_price_' + row_id).val(total_price.toFixed(2));
+                }
+            }
+        });
+
+        // Part quantity keyboard input validation
+        $('body').on('keydown', '.part_qty', function(e) {
+            var keyCode = e.keyCode || e.which;
+
+            if (!(keyCode >= 48 && keyCode <= 57 || keyCode >= 96 && keyCode <= 105 || 
+                  keyCode === 8 || keyCode === 46 || keyCode === 37 || keyCode === 39 || 
+                  keyCode === 38 || keyCode === 40)) {
+                e.preventDefault();
+            }
+
+            if (keyCode === 38 || keyCode === 40) {
+                e.preventDefault();
+                var currentValue = parseInt($(this).val()) || 0;
+                var newValue = (keyCode === 38) ? currentValue + 1 : Math.max(0, currentValue - 1);
+                $(this).val(newValue).trigger('input');
+            }
         });
     });
 </script>

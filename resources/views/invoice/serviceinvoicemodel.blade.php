@@ -137,14 +137,14 @@
                     <div class="col-md-6 col-lg-6 col-xl-6 col-xxl-6 col-sm-6 col-xs-6 mx-0 ps-4">
                         <table class="table halfpaidview">  
                             <div class="col-md-12 col-sm-12 col-xs-12">
-                                <div class="row">
+                                <!-- <div class="row">
                                     <div class="col-md-12 col-sm-12 col-xs-12 d-inline-flex">
                                         <p class="fw-bold mb-0"><i class="fa fa-user fa-lg"></i></p>
                                         <p class="cname mb-0 ps-2"><?php echo getCustomerName($tbl_services->customer_id); ?></p>
                                     </div>
-                                </div>
+                                </div> -->
 
-                                <div class="row">
+                                <!-- <div class="row">
                                     <div class="col-md-12 col-sm-12 col-xs-12 d-inline-flex">
                                         <p class="fw-bold mb-0"><img src="{{ URL::asset('public/img/icons/Vector (14).png') }}"></p>
                                         <p class="cname mb-0 ps-2"><?php echo $customer->address;
@@ -153,21 +153,21 @@
                                                                                                                                                                         echo ', ';
                                                                                                                                                                         echo getCountryName($customer->country_id); ?></p>
                                     </div>
-                                </div>
+                                </div> -->
 
-                                <div class="row">
+                                <!-- <div class="row">
                                     <div class="col-md-12 col-sm-12 col-xs-12 d-inline-flex">
                                         <p class="fw-bold mb-0"><i class="fa fa-phone fa-lg"></i></p>
                                         <p class="cname mb-0 ps-2"><?php echo "$customer->mobile_no"; ?></p>
                                     </div>
-                                </div>
+                                </div> -->
 
-                                <div class="row">
+                                <!-- <div class="row">
                                     <div class="col-md-12 col-sm-12 col-xs-12 d-inline-flex">
                                         <p class="fw-bold mb-0"><img src="{{ URL::asset('public/img/icons/Vector (15).png') }}" class="m-0"></p>
                                         <p class="cname mb-0 ps-2"><?php echo "$customer->email"; ?></p>
                                     </div>
-                                </div>
+                                </div> -->
                             </div>
                             <div class="col-md-12 col-sm-12 col-xs-12">
                                 <div class="row">
@@ -239,10 +239,10 @@
                             <thead>
                                 <tr>
                                     <th class="cname text-start">{{ trans('message.Jobcard Number') }}</th>
-                                    <th class="cname text-start">{{ trans('message.Coupon Number') }}</th>
-                                    <th class="cname text-start">{{ trans('message.Vehicle Name') }}</th>
+                                    <!-- <th class="cname text-start">{{ trans('message.Coupon Number') }}</th> -->
+                                    <!-- <th class="cname text-start">{{ trans('message.Vehicle Name') }}</th> -->
                                     <th class="cname text-start">{{ trans('message.Number Plate') }}</th>
-                                    <th class="cname text-start">{{ trans('message.In Date') }}</th>
+                                    <!-- <th class="cname text-start">{{ trans('message.In Date') }}</th> -->
                                     <th class="cname text-start">
                                         {{ trans('message.Out Date') }}
                                     </th>
@@ -251,20 +251,20 @@
                             <tbody>
                                 <tr>
                                     <td class="cname text-start fw-bold"><?php echo "$tbl_services->job_no"; ?></td>
-                                    <td class="cname text-start fw-bold"><?php if (!empty($job->coupan_no)) {
+                                    <!-- <td class="cname text-start fw-bold"><?php if (!empty($job->coupan_no)) {
                                                                                 echo $job->coupan_no;
                                                                             } else {
                                                                                 echo trans('message.Paid Service');
-                                                                            } ?></td>
-                                    <td class="cname text-start fw-bold"><?php if (!empty($job->vehicle_id)) {
+                                                                            } ?></td> -->
+                                    <!-- <td class="cname text-start fw-bold"><?php if (!empty($job->vehicle_id)) {
                                                                                 echo getVehicleName($job->vehicle_id);
-                                                                            } ?></td>
+                                                                            } ?></td> -->
                                     <td class="cname text-start fw-bold"><?php if (!empty($job)) {
                                                                                 echo getVehicleNumberPlate($job->vehicle_id);
                                                                             } ?></td>
-                                    <td class="cname text-start fw-bold"><?php if (!empty($job)) {
+                                    <!-- <td class="cname text-start fw-bold"><?php if (!empty($job)) {
                                                                                 echo $job->in_date;
-                                                                            } ?> </td>
+                                                                            } ?> </td> -->
                                     <td class="cname text-start fw-bold">
                                         <?php if (!empty($job)) {
                                             echo $job->out_date;
@@ -280,9 +280,9 @@
                                     <th class="cname text-start">{{ trans('message.Assigned To') }}</th>
                                     <th class="cname text-start">{{ trans('message.Repair Category') }}</th>
                                     <th class="cname text-start">{{ trans('message.Service Type') }}</th>
-                                    <th class="cname text-start" style="width: 275px; border-right-width: 1px;">
+                                    <!-- <th class="cname text-start" style="width: 275px; border-right-width: 1px;">
                                         {{ trans('message.Details') }}
-                                    </th>
+                                    </th> -->
                                 </tr>
                             </thead>
                             <tbody>
@@ -290,8 +290,8 @@
                                     <td class="cname text-start fw-bold"><?php echo getAssignedName($tbl_services->assign_to); ?> </td>
                                     <td class="cname text-start fw-bold"><?php echo ucwords($tbl_services->service_category); ?> </td>
                                     <td class="cname text-start fw-bold"><?php echo ucwords($tbl_services->service_type); ?> </td>
-                                    <td class="cname text-start fw-bold" style="width: 275px; border-right-width: 1px;">
-                                        <?php echo $tbl_services->detail; ?> </td>
+                                    <!-- <td class="cname text-start fw-bold" style="width: 275px; border-right-width: 1px;">
+                                        <?php echo $tbl_services->detail; ?> </td> -->
                                 </tr>
                             </tbody>
                         </table>

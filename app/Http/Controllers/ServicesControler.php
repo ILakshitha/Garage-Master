@@ -1031,8 +1031,76 @@ class ServicesControler extends Controller
             }
         } catch (\Exception $e) {
         }
+       
+        // Handle Parts Sell Data
+        $part_products = $request->part_product;
+        if (!empty($part_products) && !empty($part_products['product_id'])) {
+            // Generate a unique bill number for this parts sell transaction
+            $characters = '0123456789';
+            $bill_no = 'SP' . '' . substr(str_shuffle($characters), 0, 6);
+            
+            foreach ($part_products['product_id'] as $key => $value) {
+                if (!empty($value)) { // Only process rows with selected products
+                    $Product_id = $part_products['product_id'][$key];
+                    $qty = $part_products['qty'][$key];
+                    $price = $part_products['price'][$key];
+                    $total_price = $part_products['total_price'][$key];
+                    $manufacturer_id = $part_products['Manufacturer_id'][$key];
+                    
+                    // Create new SalePart record
+                    $sales = new \App\SalePart;
+                    $sales->customer_id = $cus_id;
+                    $sales->bill_no = $bill_no;
+                    $sales->date = date('Y-m-d');
+                    $sales->quantity = $qty;
+                    $sales->price = $price;
+                    $sales->total_price = $total_price;
+                    $sales->salesmanname = Auth::User()->id; // Current user as salesman
+                    $sales->product_id = $Product_id;
+                    $sales->product_type_id = $manufacturer_id;
+                    $sales->branch_id = Auth::User()->branch_id ?? 1; // Default branch if not set
+                    $sales->save();
+                }
+            }
+        }
+       
        // dd($tbl_service_pros);
         return redirect('jobcard/list')->with('message', $message);
+    }
+
+    // Get products by manufacturer for jobcard parts sell
+    public function getJobcardPartProducts(Request $request)
+    {
+        $id = $request->m_id;
+        
+        $tbl_products = DB::table('tbl_products')->where([['product_type_id', '=', $id], ['soft_delete', '=', 0]])->get()->toArray();
+
+        if (!empty($tbl_products)) {   ?>
+            <option value="">--Select Product--</option>
+            <?php
+            foreach ($tbl_products as $tbl_productss) { ?>
+                <option value="<?php echo  $tbl_productss->id; ?>"><?php echo $tbl_productss->name; ?></option>
+            <?php
+            }
+        } else {
+            ?>
+            <option value="">--Select Product--</option>
+        <?php
+        }
+    }
+
+    // Get product details for jobcard parts sell
+    public function getJobcardPartProductDetails(Request $request)
+    {
+        $p_id = $request->p_id;
+        
+        $product = DB::table('tbl_products')->where([['id', '=', $p_id], ['soft_delete', '=', 0]])->first();
+        
+        if ($product) {
+            return json_encode(['price' => $product->price]);
+        } else {
+            return json_encode(['price' => 0]);
+        }
     }
 
 
@@ -1376,6 +1444,10 @@ class ServicesControler extends Controller
         $logo = DB::table('tbl_settings')->first();
         $inspection_points_library_data = DB::table('inspection_points_library')->get();
 
+        // Add parts sell data
+        $manufacture_name = DB::table('tbl_product_types')->where('soft_delete', '=', 0)->get()->toArray();
+        $brand = DB::table('tbl_products')->where([['category', '=', 1], ['soft_delete', '=', 0]])->get()->toArray();
+
         $currentUser = User::where([['soft_delete', 0], ['id', '=', Auth::User()->id]])->orderBy('id', 'DESC')->first();
         $adminCurrentBranch = BranchSetting::where('id', '=', 1)->first();
         $names = null;
@@ -1389,7 +1461,7 @@ class ServicesControler extends Controller
         $message = "Service Added Successfully";
         // dd($inspection_points_library_data);
         // dd($num_plate);
-        return view('/service/jobcard_form', compact('service_data', 'vehical', 'tbl_checkout_categories', 'sale_date', 'color', 'obs_point', 'free_coupan', 'logo', 'inspection_points_library_data', 'washbay_price', 'message'));
+        return view('/service/jobcard_form', compact('service_data', 'vehical', 'tbl_checkout_categories', 'sale_date', 'color', 'obs_point', 'free_coupan', 'logo', 'inspection_points_library_data', 'washbay_price', 'message', 'manufacture_name', 'brand'));
     }
 
     //select checkpoints
@@ -1739,6 +1811,10 @@ class ServicesControler extends Controller
         $logo = DB::table('tbl_settings')->first();
         $inspection_points_library_data = DB::table('inspection_points_library')->get();
 
+        // Add parts sell data
+        $manufacture_name = DB::table('tbl_product_types')->where('soft_delete', '=', 0)->get()->toArray();
+        $brand = DB::table('tbl_products')->where([['category', '=', 1], ['soft_delete', '=', 0]])->get()->toArray();
+
         $mot_inspections_data = DB::table('mot_vehicle_inspection')->where('service_id', '=', $id)->get()->toArray();
         $mot_inspections_answers = "";
 
@@ -1763,7 +1839,7 @@ class ServicesControler extends Controller
         //die(json_encode(compact('service_data', 'vehical', 'tbl_checkout_categories', 'sale_date', 'color', 'obs_point', 'free_coupan', 'logo', 'inspection_points_library_data', 'washbay_price', 'jobcard_detail', 'message', 'mot_inspections_answers')));
         //dd($service_data,$vehical,$currentUser,$tbl_checkout_categories,$sale_date,$color,$obs_point,$free_coupan,$logo,$inspection_points_library_data,$washbay_price,$jobcard_detail,$message,$mot_inspections_answers);       
         // return view('/service/tab', compact('message','jobcard_detail','service_data','vehical','tbl_checkout_categories'));
-        return view('/service/jobcard_form', compact('service_data', 'vehical', 'tbl_checkout_categories', 'sale_date', 'color', 'obs_point', 'free_coupan', 'logo', 'inspection_points_library_data', 'washbay_price', 'jobcard_detail', 'message', 'mot_inspections_answers'));
+        return view('/service/jobcard_form', compact('service_data', 'vehical', 'tbl_checkout_categories', 'sale_date', 'color', 'obs_point', 'free_coupan', 'logo', 'inspection_points_library_data', 'washbay_price', 'jobcard_detail', 'message', 'mot_inspections_answers', 'manufacture_name', 'brand'));
         }
 
     //get used coupon data

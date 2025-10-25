@@ -242,6 +242,7 @@ class Purchasecontroller extends Controller
 		$tbl_custom_fields = DB::table('tbl_custom_fields')->where([['form_name', '=', 'purchase'], ['always_visable', '=', 'yes'], ['soft_delete', '=', 0]])->get()->toArray();
 
 
+		// die($product);
 		return view('purchase.add', compact('supplier', 'product', 'code', 'Select_product', 'tbl_custom_fields', 'first_product', 'branchDatas'));
 	}
 

@@ -154,7 +154,7 @@ Route::group(['prefix' => 'purchase'], function () {
 //Stock
 Route::group(['prefix' => 'stoke'], function () {
 	Route::get('/list', ['as' => 'stoke/list', 'uses' => 'Stockcontroller@index'])->middleware('can:stock_view');
-
+	Route::get('/add', ['as' => 'stoke/list', 'uses' => 'Stockcontroller@index'])->middleware('can:stock_edit');
 	Route::get('/list/edit/{id}', ['as' => 'stoke/list/edit', 'uses' => 'Stockcontroller@edit']);
 	Route::post('/list/edit/update/{id}', ['as' => 'stoke/list/edit/update/{id}', 'uses' => 'Stockcontroller@update']);
 	Route::get('/list/stockview', ['as' => 'stoke/list/stockview', 'uses' => 'Stockcontroller@stockview'])->middleware('can:stock_view');
@@ -335,6 +335,10 @@ Route::group(['prefix' => 'service'], function () {
 	Route::post('/vehicleadd', 'ServicesControler@vehicleadd');
 
 	Route::post('add_jobcard', 'ServicesControler@add_jobcard')->middleware('can:service_add');
+
+	// Jobcard parts sell routes
+	Route::get('jobcard/parts/products', 'ServicesControler@getJobcardPartProducts');
+	Route::get('jobcard/parts/product-details', 'ServicesControler@getJobcardPartProductDetails');
 
 	Route::get('list/view', ['as' => 'service/list/view', 'uses' => 'ServicesControler@serviceview']);
 	Route::get('get_vehi_name', ['as' => 'service/add', 'uses' => 'ServicesControler@get_vehicle_name']);
@@ -844,8 +848,9 @@ Route::get('/sales_part/delete/{id}', 'SalesPartcontroller@destroy')->middleware
 
 Route::get('/sales_part/list/modal', 'SalesPartcontroller@view')->middleware('can:salespart_view');
 Route::get('/sales_part/list/print', 'SalesPartcontroller@print')->middleware('can:salespart_view');
-Route::get('/sales_part/getprice', 'SalesPartcontroller@getmodel_name');
+Route::get('/sales_part/getprice', 'SalesPartcontroller@getprice');
 Route::get('/sales_part/add/getproductname', 'SalesPartcontroller@getproductname');
+Route::get('/sales_part/productitem', 'SalesPartcontroller@productitem');
 Route::get('/sale_part/deleteproduct', 'SalesPartcontroller@sale_part_destroy');
 
 //New route add by mukesh for get product quantity availability
